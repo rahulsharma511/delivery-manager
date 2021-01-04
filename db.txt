@@ -1,0 +1,147 @@
+
+drop database rahulagencies;
+create database rahulagencies;
+use rahulagencies;
+
+
+create table products(
+id int auto_increment,
+product_name varchar(100),
+company_name varchar(100),
+primary_unit_name varchar(100),
+secondary_unit_name varchar(100),
+secondary_unit int,
+ternary_unit_name varchar(100),
+ternary_unit int,
+buy_price int,
+sell_price int,
+primary_qnty int,
+secondary_qnty int,
+ternary_qnty int,
+gst int,
+primary key (id)
+);
+
+create table old_products(
+id int auto_increment,
+product_name varchar(100),
+company_name varchar(100),
+primary_unit_name varchar(100),
+secondary_unit_name varchar(100),
+secondary_unit int,
+ternary_unit_name varchar(100),
+ternary_unit int,
+buy_price int,
+sell_price int,
+gst int,
+primary key (id)
+);
+
+insert into products(product_name, company_name, primary_unit_name, secondary_unit_name, secondary_unit, ternary_unit_name, ternary_unit,buy_price,sell_price,gst,primary_qnty,secondary_qnty,ternary_qnty)
+values(
+"moong daal",
+"evita",
+"box",
+"packs",
+12,
+"packets",
+12,
+442,
+560,
+12,
+100,
+100,
+100
+);
+
+insert into deliveries(delivery_name,delivery_details) values ("shyam","sengaon");
+insert into deliveries_data(deliveries_id,product_id,primary_qnty,secondary_qnty,ternary_qnty)
+values (1,2,4,8,6);
+
+
+  create table users(
+  id int auto_increment primary key,
+  name varchar(100),
+  username varchar(100),
+  password varchar(100)
+  );
+
+  insert into users values(1,
+  "nandkishor",
+  "nandkishor",
+  "qwertyui"
+  )
+
+
+
+  create table deliveries(
+  id int primary key auto_increment,
+  delivery_name varchar(100),
+  delivery_details varchar(100),
+  created_on date
+  );
+
+  create table deliveries_data(
+  deliveries_id int,
+  product_id int ,
+  primary_qnty int,
+  secondary_qnty int,
+  ternary_qnty int,
+  foreign key (deliveries_id) references deliveries(id),
+  foreign key (product_id) references products(id)
+  );
+
+
+  create table sold(
+  id int primary key auto_increment,
+  delivery_name varchar(100),
+  delivery_details varchar(100),
+  created_on date
+  );
+
+  create table sold_data(
+  sold_id int ,
+  product_id int,
+  primary_qnty int,
+  secondary_qnty int,
+  ternary_qnty int,
+  foreign key (sold_id) references sold(id),
+  foreign key (product_id) references products(id)
+  );
+
+
+    delimiter $$
+    create trigger update_products_quantity
+    after insert on deliveries_data for each row
+    begin
+    update products
+    set products.primary_qnty=products.primary_qnty-new.primary_qnty ,
+
+        products.secondary_qnty=
+          case when new.ternary_qnty > products.ternary_qnty then
+          products.secondary_qnty - ceiling((new.ternary_qnty-products.ternary_qnty)/products.ternary_unit)
+          else products.secondary_qnty
+          end ,
+        products.ternary_qnty=
+          case when products.ternary_qnty >= new.ternary_qnty    then
+          products.ternary_qnty - new.ternary_qnty
+          else
+          products.ternary_qnty + (products.ternary_unit-(new.ternary_qnty % products.ternary_unit))
+          end ,
+
+
+        products.primary_qnty=
+          case when new.secondary_qnty > products.secondary_qnty then
+          products.primary_qnty - ceiling(new.secondary_qnty-products.secondary_qnty/products.secondary_unit)
+          else
+          products.primary_qnty
+          end ,
+        products.secondary_qnty=
+          case when products.secondary_qnty >=new.secondary_qnty    then
+          products.secondary_qnty - new.secondary_qnty
+          else
+          products.secondary_qnty + (products.secondary_unit-(new.secondary_qnty % products.secondary_unit ))
+          end 
+    where new.product_id=products.id;
+    end$$
+    delimiter ;
